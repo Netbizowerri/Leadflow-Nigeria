@@ -1,0 +1,6 @@
+{
+  "name": "LeadFlow Nigeria",
+  "description": "Powerful autonomous lead generator for web developers to discover businesses across Nigeria with no website, featuring real-time scraping, email enrichment, and one-click Privyr CRM integration.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
