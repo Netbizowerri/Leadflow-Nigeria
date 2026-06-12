@@ -12,7 +12,7 @@ import SearchPage from './pages/Search';
 import ResultsPage from './pages/Results';
 import LeadsPage from './pages/Leads';
 import WebhookPage from './pages/Webhook';
-import { Key, ShieldCheck, Play, Sparkles } from 'lucide-react';
+import { Key, ShieldCheck, Play, Sparkles, AlertTriangle } from 'lucide-react';
 
 function DashboardLayout() {
   const { isLoggedIn, login } = useApp();
@@ -46,13 +46,21 @@ interface LoginPortalProps {
 }
 
 function LoginPortal({ onLogin }: LoginPortalProps) {
-  const [email, setEmail] = useState('netbiz0925@gmail.com');
-  const [password, setPassword] = useState('**********');
+  const [email, setEmail] = useState('Netbiz0925@gmail.com');
+  const [password, setPassword] = useState('');
   const [outscraperKey, setOutscraperKey] = useState('');
   const [loading, setLoading] = useState(false);
+  const [loginError, setLoginError] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setLoginError('');
+
+    if (email !== 'Netbiz0925@gmail.com' || password !== 'NetBizOwerri0925##') {
+      setLoginError('Invalid email or access token.');
+      return;
+    }
+
     setLoading(true);
     setTimeout(() => {
       onLogin(outscraperKey);
@@ -91,10 +99,9 @@ function LoginPortal({ onLogin }: LoginPortalProps) {
             <input
               type="email"
               required
-              disabled
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full bg-[#0F172A] border border-slate-750 text-xs text-slate-400 rounded-lg px-3.5 py-3 focus:outline-none cursor-not-allowed font-medium"
+              className="w-full bg-[#0F172A] border border-slate-750 text-xs text-white rounded-lg px-3.5 py-3 focus:border-blue-500 focus:outline-none font-medium"
             />
           </div>
 
@@ -104,10 +111,11 @@ function LoginPortal({ onLogin }: LoginPortalProps) {
             </label>
             <input
               type="password"
-              disabled
+              required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-[#0F172A] border border-slate-750 text-xs text-slate-400 rounded-lg px-3.5 py-3 focus:outline-none cursor-not-allowed font-mono"
+              placeholder="Enter your access token"
+              className="w-full bg-[#0F172A] border border-slate-750 text-xs text-white rounded-lg px-3.5 py-3 focus:border-blue-500 focus:outline-none font-mono"
             />
           </div>
 
@@ -131,6 +139,13 @@ function LoginPortal({ onLogin }: LoginPortalProps) {
               500 free searches/month. Get your free key at outscraper.com
             </p>
           </div>
+
+          {loginError && (
+            <div className="p-3 bg-red-950/40 border border-red-900/60 rounded-lg text-xs text-red-400 flex items-center gap-2">
+              <AlertTriangle size={15} />
+              <span>{loginError}</span>
+            </div>
+          )}
 
           {/* Login button */}
           <button
