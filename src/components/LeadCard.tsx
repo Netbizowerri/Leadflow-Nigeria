@@ -1,9 +1,5 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import React, { useState } from 'react';
+import { motion } from 'motion/react';
 import { Lead } from '../types';
 import { 
   Phone, 
@@ -16,17 +12,17 @@ import {
   Share2,
   CheckCircle,
   Copy,
-  FolderMinus
+  XCircle
 } from 'lucide-react';
 
 interface LeadCardProps {
   lead: Lead;
   onSendToCRM: (lead: Lead) => Promise<boolean>;
   isClaimed: boolean;
-  onViewOriginal?: () => void;
+  onReject?: (lead: Lead) => void;
 }
 
-export default function LeadCard({ lead, onSendToCRM, isClaimed }: LeadCardProps) {
+export default function LeadCard({ lead, onSendToCRM, isClaimed, onReject }: LeadCardProps) {
   const [sending, setSending] = useState(false);
   const [copiedPhone, setCopiedPhone] = useState(false);
   const [copiedEmail, setCopiedEmail] = useState(false);
@@ -64,22 +60,24 @@ export default function LeadCard({ lead, onSendToCRM, isClaimed }: LeadCardProps
     }
   };
 
-  // Construct a direct Google maps manual verification link
   const mapsSearchUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(lead.name + ' ' + lead.address)}`;
 
   return (
-    <div className={`
-      relative bg-[#1E293B] border rounded-xl overflow-hidden shadow-md transition-all duration-300 flex flex-col justify-between h-full group
-      ${isClaimed || sentSuccess 
-        ? 'border-emerald-500/30 opacity-60' 
-        : 'border-slate-800 hover:border-slate-700 hover:shadow-xl hover:-translate-y-0.5'}
-    `}>
-      {/* Top Banner Accent */}
-      <div className={`h-1.5 w-full ${isClaimed || sentSuccess ? 'bg-emerald-500' : 'bg-blue-600'}`} />
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.3 }}
+      transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+      className={`
+        relative bg-[#1E293B] border rounded-xl overflow-hidden shadow-md transition-all duration-300 flex flex-col justify-between h-full group
+        ${isClaimed || sentSuccess 
+          ? 'border-emerald-500/30 opacity-60' 
+          : 'border-slate-800 hover:border-slate-700 hover:shadow-xl hover:-translate-y-0.5'}
+      `}
+    >
+      <div className={`h-1.5 w-full ${isClaimed || sentSuccess ? 'bg-emerald-500' : 'bg-gradient-to-r from-emerald-500 to-blue-600'}`} />
 
-      {/* Main Body */}
       <div className="p-5 flex-grow">
-        {/* Badges & Directory Origin */}
         <div className="flex items-center justify-between mb-3">
           <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono font-bold tracking-wider uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
             No Website Detected
@@ -90,17 +88,14 @@ export default function LeadCard({ lead, onSendToCRM, isClaimed }: LeadCardProps
           </span>
         </div>
 
-        {/* Business Title */}
-        <h3 className="font-sora font-semibold text-lg text-white tracking-tight leading-snug group-hover:text-blue-400 transition duration-150 mb-1">
+        <h3 className="font-sora font-semibold text-lg text-white tracking-tight leading-snug group-hover:text-emerald-400 transition duration-150 mb-1">
           {lead.name}
         </h3>
 
-        {/* Categories / Tags */}
-        <p className="text-xs text-blue-400/90 font-mono font-medium mb-3 uppercase tracking-wider">
+        <p className="text-xs text-emerald-400/80 font-mono font-medium mb-3 uppercase tracking-wider">
           {lead.category}
         </p>
 
-        {/* Rating stars */}
         {lead.rating && (
           <div className="flex items-center space-x-1 mb-4">
             <div className="flex items-center text-amber-500">
@@ -115,19 +110,16 @@ export default function LeadCard({ lead, onSendToCRM, isClaimed }: LeadCardProps
           </div>
         )}
 
-        {/* Address and Contacts details layout */}
         <div className="space-y-2 text-xs border-t border-[#1E293B]/80 pt-3 text-slate-300">
-          {/* Address */}
           <div className="flex items-start space-x-2">
             <MapPin size={14} className="text-slate-500 shrink-0 mt-0.5" />
             <span className="line-clamp-2 leading-relaxed">{lead.address}</span>
           </div>
 
-          {/* Phone Number */}
           <div className="flex items-center justify-between group/row">
             <div className="flex items-center space-x-2">
               <Phone size={14} className="text-slate-500 shrink-0" />
-              <a href={`tel:${lead.phone}`} className="hover:text-blue-400 transition hover:underline font-mono font-semibold">
+              <a href={`tel:${lead.phone}`} className="hover:text-emerald-400 transition hover:underline font-mono font-semibold">
                 {lead.phone}
               </a>
             </div>
@@ -140,12 +132,11 @@ export default function LeadCard({ lead, onSendToCRM, isClaimed }: LeadCardProps
             </button>
           </div>
 
-          {/* Email */}
           <div className="flex items-center justify-between group/row min-h-6">
             <div className="flex items-center space-x-2 max-w-[80%]">
               <Mail size={14} className="text-slate-500 shrink-0" />
               {lead.email ? (
-                <a href={`mailto:${lead.email}`} className="hover:text-blue-400 transition hover:underline font-mono truncate">
+                <a href={`mailto:${lead.email}`} className="hover:text-emerald-400 transition hover:underline font-mono truncate">
                   {lead.email}
                 </a>
               ) : (
@@ -163,7 +154,6 @@ export default function LeadCard({ lead, onSendToCRM, isClaimed }: LeadCardProps
             )}
           </div>
 
-          {/* Pitches Insights Notes */}
           <div className="mt-4 bg-[#0F172A]/45 border border-slate-800/60 p-3 rounded-lg">
             <h5 className="text-[10px] font-mono font-bold tracking-wider text-slate-500 uppercase mb-1">
               Sales Pitch Insights
@@ -175,17 +165,28 @@ export default function LeadCard({ lead, onSendToCRM, isClaimed }: LeadCardProps
         </div>
       </div>
 
-      {/* Card Actions Footer */}
       <div className="px-5 py-4 border-t border-slate-800/60 bg-[#162030] flex items-center justify-between gap-2.5">
-        <a 
-          href={mapsSearchUrl} 
-          target="_blank" 
-          rel="noreferrer"
-          className="text-slate-400 hover:text-white border border-slate-700/80 bg-slate-900/60 hover:bg-slate-900 px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-1.5 transition duration-150 cursor-pointer"
-        >
-          <ExternalLink size={13} />
-          <span>Verify Map</span>
-        </a>
+        <div className="flex items-center gap-2">
+          <a 
+            href={mapsSearchUrl} 
+            target="_blank" 
+            rel="noreferrer"
+            className="text-slate-400 hover:text-white border border-slate-700/80 bg-slate-900/60 hover:bg-slate-900 px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-1.5 transition duration-150 cursor-pointer"
+          >
+            <ExternalLink size={13} />
+            <span>Verify Map</span>
+          </a>
+          {onReject && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onReject(lead); }}
+              title="Reject and block this lead permanently"
+              className="text-slate-500 hover:text-red-400 border border-slate-700/80 bg-slate-900/60 hover:bg-red-950/20 hover:border-red-900/60 px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-1.5 transition duration-150"
+            >
+              <XCircle size={13} />
+              <span>Reject</span>
+            </button>
+          )}
+        </div>
 
         {isClaimed || sentSuccess ? (
           <button 
@@ -199,8 +200,7 @@ export default function LeadCard({ lead, onSendToCRM, isClaimed }: LeadCardProps
           <button 
             onClick={handleSendCRM}
             disabled={sending}
-            className="flex-grow bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2 px-3 rounded-lg text-xs transition duration-150 flex items-center justify-center gap-1.5 shadow-md shadow-blue-900/30 active:scale-95"
-            id={`send-crm-${lead.id}`}
+            className="flex-grow bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-500 hover:to-blue-500 text-white font-semibold py-2 px-3 rounded-lg text-xs transition-all duration-300 flex items-center justify-center gap-1.5 shadow-md shadow-emerald-900/30 active:scale-95"
           >
             {sending ? (
               <>
@@ -216,6 +216,6 @@ export default function LeadCard({ lead, onSendToCRM, isClaimed }: LeadCardProps
           </button>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 }

@@ -8,7 +8,6 @@ import { Lead, LeadStatus, WebhookLog } from '../types';
 
 interface AppContextProps {
   isLoggedIn: boolean;
-  outscraperApiKey: string;
   hunterApiKey: string;
   privyrWebhookUrl: string;
   customWebhookUrl: string;
@@ -16,11 +15,12 @@ interface AppContextProps {
   webhookAuthValue: string;
   leads: Lead[];
   claimedLeadIds: string[];
+  blockedLeadPhones: string[];
   webhookHistory: WebhookLog[];
   searchHistory: string[];
-  login: (key: string) => void;
+  login: () => void;
   logout: () => void;
-  saveKeys: (outscraperKey: string, hunterKey: string) => void;
+  saveKeys: (hunterKey: string) => void;
   saveWebhookConfig: (config: {
     privyrWebhookUrl?: string;
     customWebhookUrl?: string;
@@ -31,6 +31,7 @@ interface AppContextProps {
   updateLeadStatus: (leadId: string, status: LeadStatus) => void;
   updateLeadNotes: (leadId: string, notes: string) => void;
   deleteLead: (leadId: string) => void;
+  blockLead: (phone: string) => void;
   claimLeadAndSendToCRM: (lead: Lead) => Promise<boolean>;
   bulkSendToCRM: (leads: Lead[]) => Promise<{ successCount: number; failedCount: number }>;
   clearClaimedLeads: () => void;
@@ -45,10 +46,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // --- Persistent States ---
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
     return localStorage.getItem('lf_is_logged_in') === 'true';
-  });
-
-  const [outscraperApiKey, setOutscraperApiKey] = useState<string>(() => {
-    return localStorage.getItem('lf_outscraper_api_key') || '';
   });
 
   const [hunterApiKey, setHunterApiKey] = useState<string>(() => {
@@ -91,14 +88,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return saved ? JSON.parse(saved) : [];
   });
 
+  const [blockedLeadPhones, setBlockedLeadPhones] = useState<string[]>(() => {
+    const saved = localStorage.getItem('lf_blocked_phones');
+    return saved ? JSON.parse(saved) : [];
+  });
+
   // --- Effects to Sync with LocalStorage ---
   useEffect(() => {
     localStorage.setItem('lf_is_logged_in', isLoggedIn ? 'true' : 'false');
   }, [isLoggedIn]);
-
-  useEffect(() => {
-    localStorage.setItem('lf_outscraper_api_key', outscraperApiKey);
-  }, [outscraperApiKey]);
 
   useEffect(() => {
     localStorage.setItem('lf_hunter_api_key', hunterApiKey);
@@ -136,15 +134,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('lf_search_history', JSON.stringify(searchHistory));
   }, [searchHistory]);
 
+  useEffect(() => {
+    localStorage.setItem('lf_blocked_phones', JSON.stringify(blockedLeadPhones));
+  }, [blockedLeadPhones]);
+
   // --- Auth Handlers ---
-  const login = (key: string) => {
-    if (key.trim()) {
-      setOutscraperApiKey(key.trim());
-      setIsLoggedIn(true);
-    } else {
-      // Allow general bypass login without immediate key
-      setIsLoggedIn(true);
-    }
+  const login = () => {
+    setIsLoggedIn(true);
   };
 
   const logout = () => {
@@ -152,8 +148,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   // --- API / Key Configuration ---
-  const saveKeys = (outscraperKey: string, hunterKey: string) => {
-    setOutscraperApiKey(outscraperKey.trim());
+  const saveKeys = (hunterKey: string) => {
     setHunterApiKey(hunterKey.trim());
   };
 
@@ -214,6 +209,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const clearSearchHistory = () => {
     setSearchHistory([]);
+  };
+
+  const blockLead = (phone: string) => {
+    const trimmed = phone.trim();
+    if (!trimmed) return;
+    setBlockedLeadPhones(prev => prev.includes(trimmed) ? prev : [...prev, trimmed]);
   };
 
   // --- Webhook / CRM delivery mechanism (REST API call to our backend proxy) ---
@@ -379,7 +380,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     <AppContext.Provider
       value={{
         isLoggedIn,
-        outscraperApiKey,
         hunterApiKey,
         privyrWebhookUrl,
         customWebhookUrl,
@@ -387,6 +387,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         webhookAuthValue,
         leads,
         claimedLeadIds,
+        blockedLeadPhones,
         webhookHistory,
         searchHistory,
         login,
@@ -397,6 +398,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         updateLeadStatus,
         updateLeadNotes,
         deleteLead,
+        blockLead,
         claimLeadAndSendToCRM,
         bulkSendToCRM,
         clearClaimedLeads,

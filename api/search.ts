@@ -32,6 +32,13 @@ export default async function handler(req: any, res: any) {
     return res.status(400).json({ error: 'Query and location are required parameters' });
   }
 
+  const sanitizedQuery = String(query).trim().replace(/[\x00-\x1F]/g, '').slice(0, 100);
+  const sanitizedLocation = String(location).trim().replace(/[\x00-\x1F]/g, '').slice(0, 100);
+
+  if (!sanitizedQuery || !sanitizedLocation) {
+    return res.status(400).json({ error: 'Query and location must be non-empty after sanitization' });
+  }
+
   if (source === 'Nigerian Directories' || source === 'VConnect' || source === 'BusinessList') {
     if (!ai) {
       return res.status(400).json({
@@ -42,7 +49,15 @@ export default async function handler(req: any, res: any) {
     try {
       const directorySource = source === 'Nigerian Directories' ? 'VConnect, BusinessList.com.ng, and YellowPages Nigeria' : source;
       const prompt = `
-        Search real directories such as ${directorySource} for businesses inside the "${query}" sector located in "${location}", Nigeria.
+        ---BEGIN INSTRUCTION---
+        Search real directories such as ${directorySource} for businesses.
+        ---END INSTRUCTION---
+        ---BEGIN USER INPUT---
+        Sector: "${sanitizedQuery}"
+        Location: "${sanitizedLocation}", Nigeria
+        ---END USER INPUT---
+
+        Your aim is to discover real, verified businesses that DO NOT have an official professional website (custom domain .com, .ng, etc.), but have listed contact details like phone number and/or email address.
         Your aim is to discover real, verified businesses that DO NOT have an official professional website (custom domain .com, .ng, etc.), but have listed contact details like phone number and/or email address.
 
         Retrieve 10 to 15 real listings.
@@ -98,7 +113,7 @@ export default async function handler(req: any, res: any) {
           address: item.address || 'Lagos, Nigeria',
           rating: item.rating || null,
           userRatingsTotal: Math.floor(Math.random() * 20) + 1,
-          category: item.category || query,
+          category: item.category || sanitizedQuery,
           status: 'New',
           source: item.source || source,
           notes: item.notes || 'No website found. Found listed on local directory.',

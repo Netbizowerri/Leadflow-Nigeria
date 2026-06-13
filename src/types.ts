@@ -15,7 +15,7 @@ export interface Lead {
   userRatingsTotal: number | null;
   category: string;
   status: LeadStatus;
-  source: 'Google Maps' | 'VConnect' | 'BusinessList' | 'Manual';
+  source: 'Google Maps' | 'Nigerian Directories' | 'VConnect' | 'BusinessList' | 'Manual';
   notes: string;
   dateAdded: string; // ISO string
   originalSearchQuery?: string;

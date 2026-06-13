@@ -1,8 +1,3 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
@@ -20,7 +15,8 @@ import {
   AlertTriangle,
   History,
   TrendingUp,
-  Sliders
+  Sliders,
+  Globe
 } from 'lucide-react';
 
 const NIGERIAN_STATES = [
@@ -64,17 +60,135 @@ const NIGERIAN_STATES = [
 ];
 
 const INDUSTRIES = [
-  'Real Estate Agency',
-  'Private Primary & Secondary Schools',
-  'Hospitals & Medical Centers',
-  'Law Firms & Solicitors',
-  'Boutique Hotels & Lodges',
-  'Event Planners & Venues',
-  'Car Dealerships & Auto Garages',
-  'Interior Designers & Decorators',
-  'Supermarkets & Retail Stores',
+  'AC & Refrigeration Services',
+  'Accounting & Audit Firms',
+  'Adult Education & Literacy Centers',
+  'Architects & Urban Planners',
+  'Artisans & Craftsmen Cooperatives',
+  'Auto Spare Parts Dealers',
+  'Baby Products & Toy Stores',
   'Bakeries & Confectioneries',
-  'Gyms & Fitness Centers'
+  'Banks & Microfinance Banks',
+  'Barber Shops & Unisex Salons',
+  'Bars & Nightlife Venues',
+  'Bookshops & Stationery Stores',
+  'Boutique Fashion Stores',
+  'Boutique Hotels & Lodges',
+  'Building Construction Companies',
+  'Cafes & Coffee Shops',
+  'Car Dealerships & Auto Garages',
+  'Car Wash & Detailing Services',
+  'Cargo & Shipping Services',
+  'Catering & Food Delivery Services',
+  'Catering Services',
+  'CCTV & Security System Installers',
+  'Chambers of Commerce & Trade Associations',
+  'Churches & Ministries',
+  'Cleaning & Janitorial Services',
+  'Cobblers & Shoe Repairs',
+  'Coding & Tech Bootcamps',
+  'Coding Bootcamps & Tech Hubs',
+  'Community Development Associations',
+  'Cooperative Societies & Credit Unions',
+  'Crop Farming & Agro-Processing',
+  'Dental Clinics',
+  'Diagnostic & Medical Labs',
+  'Digital Marketing Agencies',
+  'Drink Distributors & Bottled Water Companies',
+  'Driving Schools',
+  'Dry Cleaners & Laundry Pickup',
+  'E-Commerce Platform Operators',
+  'Electronics & Gadget Stores',
+  'Engineering Consulting Firms',
+  'Event Planners & Venues',
+  'Faith-Based Outreach Programs',
+  'Farmers Markets & Organic Stores',
+  'Fashion Designers & Tailoring',
+  'Film & Video Production Companies',
+  'Fire & Emergency Services',
+  'Fish Farming & Aquaculture',
+  'Food & Beverage Manufacturing',
+  'Funeral Homes & Mortuary Services',
+  'Furniture Stores & Wood Workshops',
+  'Generator Repairs & Maintenance',
+  'Glass & Aluminum Fabricators',
+  'Government Agencies & Parastatals',
+  'Graphic Design & Branding Agencies',
+  'Guest Houses & Shortlets',
+  'Gyms & Fitness Centers',
+  'Home Appliances & Furniture Stores',
+  'Hospitals & Medical Centers',
+  'HR & Recruitment Agencies',
+  'Insurance Brokerage Firms',
+  'Interior Designers & Decorators',
+  'Investment & Stock Brokerage Firms',
+  'IT Support & Computer Repairs',
+  'Landscaping & Gardening Services',
+  'Laundry & Dry Cleaning Services',
+  'Law Firms & Solicitors',
+  'Local Government Councils',
+  'Makeup Artistry & Beauty Salons',
+  'Management Consultants',
+  'Martial Arts & Self-Defense Studios',
+  'Maternity & Fertility Clinics',
+  'Mechanic Workshops & Repairs',
+  'Media & Broadcasting Stations',
+  'Mental Health & Counseling Centers',
+  'Mobile Money & Fintech Agents',
+  'Money Transfer & Forex Bureaus',
+  'Mosques & Islamic Centers',
+  'Moving & Haulage Services',
+  'Music & Art Schools',
+  'Music Recording Studios',
+  'Networking & ISP Providers',
+  'NGOs & Non-Profit Organizations',
+  'Nursery & Daycare Centers',
+  'Nutrition & Weight Loss Centers',
+  'Optical & Eye Care Centers',
+  'Painters & Painting Contractors',
+  'Party Rental & Equipment Hire',
+  'Pest Control Services',
+  'Pet Stores & Veterinary Shops',
+  'Pharmacy & Drug Stores',
+  'Phone & Accessory Shops',
+  'Photography & Videography Studios',
+  'Physiotherapy & Rehabilitation Centers',
+  'Plumbing & Electrical Services',
+  'Poultry & Livestock Farming',
+  'Printing & Publishing Houses',
+  'Private Clinics & Nursing Homes',
+  'Private Primary & Secondary Schools',
+  'Public Libraries & Community Centers',
+  'Real Estate Agency',
+  'Resorts & Holiday Rentals',
+  'Restaurants & Fast Food Chains',
+  'Roofing & Ceiling Installers',
+  'Shoe & Accessory Stores',
+  'Software Development Companies',
+  'Spa & Wellness Centers',
+  'Sporting Goods Stores',
+  'Sports Academies & Coaching',
+  'Supermarkets & Retail Stores',
+  'Surveyors & Valuers',
+  'Tailoring & Alteration Services',
+  'Tattoo & Piercing Studios',
+  'Tax & Financial Advisors',
+  'Tile & Flooring Dealers',
+  'Tire Dealers & Battery Shops',
+  'Traditional Medicine & Herbal Clinics',
+  'Travel Agencies & Tour Operators',
+  'Truck & Logistics Companies',
+  'Tutoring & Lesson Centers',
+  'Universities & Polytechnics',
+  'Vehicle Tracking & Security Installers',
+  'Vocational Training Institutes',
+  'Waste Management & Recycling',
+  'Watch & Jewelry Repairs',
+  'Web Design & Development Agencies',
+  'Wedding Planning & Event Styling',
+  'Well Drilling & Borehole Services',
+  'Yoga & Pilates Studios',
+  'Youth Empowerment & Skill Acquisition Centers'
 ];
 
 interface LogEntry {
@@ -83,50 +197,8 @@ interface LogEntry {
   type: 'info' | 'success' | 'warn' | 'error';
 }
 
-async function searchOutscraper(
-  query: string,
-  location: string,
-  apiKey: string,
-  limit: number = 20
-): Promise<any[]> {
-  const encodedQuery = encodeURIComponent(`${query} in ${location}`);
-  const url = `https://api.app.outscraper.com/maps/search-v3?query=${encodedQuery}&limit=${limit}&async=false`;
-
-  const response = await fetch(url, {
-    method: 'GET',
-    headers: {
-      'X-API-KEY': apiKey,
-    },
-  });
-
-  if (!response.ok) {
-    const err = await response.json();
-    throw new Error(err?.message || `Outscraper error: ${response.status}`);
-  }
-
-  const data = await response.json();
-  const places: any[] = data?.data?.[0] ?? [];
-
-  return places.map((place: any) => ({
-    id: place.place_id || `os-${Date.now()}-${Math.random().toString(36).substr(2,6)}`,
-    name: place.name || 'Unknown Business',
-    address: place.full_address || place.address || '',
-    phone: place.phone || place.phones?.[0] || '',
-    email: place.email || place.emails?.[0] || null,
-    website: place.site || place.website || '',
-    category: place.type || place.subtypes?.[0] || query,
-    rating: place.rating ?? null,
-    userRatingsTotal: place.reviews ?? null,
-    source: 'Google Maps' as const,
-    status: 'New' as const,
-    notes: '',
-    dateAdded: new Date().toISOString(),
-    hasWebsite: !!(place.site || place.website),
-  }));
-}
-
 export default function SearchPage({ setActiveResults }: { setActiveResults: (leads: any[]) => void }) {
-  const { outscraperApiKey, addSearchHistory, searchHistory } = useApp();
+  const { addSearchHistory, searchHistory } = useApp();
   const navigate = useNavigate();
 
   // Form states
@@ -136,7 +208,6 @@ export default function SearchPage({ setActiveResults }: { setActiveResults: (le
   const [location, setLocation] = useState(NIGERIAN_STATES[0]);
   const [customLocation, setCustomLocation] = useState('');
   const [useCustomLocation, setUseCustomLocation] = useState(false);
-  const [source, setSource] = useState<'Google Maps' | 'Nigerian Directories' | 'All Directories' | 'VConnect' | 'BusinessList'>('Google Maps');
   const [useGeminiEnrichment, setUseGeminiEnrichment] = useState(true);
 
   // Scan progress state
@@ -173,11 +244,6 @@ export default function SearchPage({ setActiveResults }: { setActiveResults: (le
       return;
     }
 
-    if (source === 'Google Maps' && (!outscraperApiKey || outscraperApiKey.trim().length < 5)) {
-      setErrorMessage('An Outscraper API Key is required to search Google Maps. Please configure it in Key settings.');
-      return;
-    }
-
     // Begin pipeline state updates
     setScanState({
       status: 'searching',
@@ -187,22 +253,21 @@ export default function SearchPage({ setActiveResults }: { setActiveResults: (le
       resultsNoWebsite: 0
     });
 
-    addLog(`Initiating System Lead Scraper v1.0.0`, 'info');
+    addLog(`Initiating System Lead Scraper v2.0`, 'info');
     addLog(`Targeting sector: [${selectedIndustry.toUpperCase()}]`, 'info');
     addLog(`Targeting region: [${selectedLocation.toUpperCase()}]`, 'info');
-    addLog(`Method: [${source}]`, 'info');
+    addLog(`Method: [Nigerian Directories via Gemini AI]`, 'info');
 
-    // Simulate agent pipeline steps in the UI while backend performs the heavy lifting
     let interval: NodeJS.Timeout | null = null;
     let stepCount = 0;
 
     const fakeSteps = [
-      { prg: 10, txt: 'Routing queries to Outscraper API indexes...', delay: 800 },
-      { prg: 22, txt: 'Text query resolved. Executing Google Maps business search...', delay: 1500 },
-      { prg: 35, txt: 'Outscraper data received. Processing business listings...', delay: 2400 },
-      { prg: 50, txt: 'Collation successful. Resolving business contact details...', delay: 2200 },
-      { prg: 70, txt: 'Scrutinizing domains. Filtering targets with NO custom website listings...', delay: 2000 },
-      { prg: 88, txt: 'Finalizing results. Preparing lead data...', delay: 2500 }
+      { prg: 10, txt: 'Routing queries to Gemini AI indexes...', delay: 800 },
+      { prg: 25, txt: 'Searching Nigerian business directories via Google-grounded search...', delay: 1500 },
+      { prg: 40, txt: 'Directory data received. Processing business listings...', delay: 2400 },
+      { prg: 55, txt: 'Collation successful. Resolving business contact details...', delay: 2200 },
+      { prg: 75, txt: 'Filtering targets with NO custom website listings...', delay: 2000 },
+      { prg: 90, txt: 'Finalizing results. Preparing lead data...', delay: 2500 }
     ];
 
     const runLogsSimulation = () => {
@@ -215,8 +280,8 @@ export default function SearchPage({ setActiveResults }: { setActiveResults: (le
       }));
       
       let type: 'info' | 'success' | 'warn' = 'info';
-      if (step.prg === 35) type = 'warn';
-      if (step.prg >= 70) type = 'success';
+      if (step.prg >= 55) type = 'warn';
+      if (step.prg >= 75) type = 'success';
 
       addLog(step.txt, type);
       stepCount++;
@@ -224,38 +289,33 @@ export default function SearchPage({ setActiveResults }: { setActiveResults: (le
       interval = setTimeout(runLogsSimulation, nextDelay);
     };
 
-    // Stagger client side pipeline visualization
     interval = setTimeout(runLogsSimulation, 500);
 
     try {
       let results: any[] = [];
 
-      if (source === 'Google Maps') {
-        results = await searchOutscraper(selectedIndustry, selectedLocation, outscraperApiKey);
-      } else {
-        const response = await fetch('/api/search', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            query: selectedIndustry,
-            location: selectedLocation,
-            source,
-            useGeminiEnrichment
-          })
-        });
+      const response = await fetch('/api/search', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: selectedIndustry,
+          location: selectedLocation,
+          source: 'Nigerian Directories',
+          useGeminiEnrichment
+        })
+      });
 
-        if (interval) clearTimeout(interval);
+      if (interval) clearTimeout(interval);
 
-        const data = await response.json();
+      const data = await response.json();
 
-        if (!response.ok) {
-          throw new Error(data.error || 'Server returned an error scanning.');
-        }
-
-        results = data.leads || [];
+      if (!response.ok) {
+        throw new Error(data.error || 'Server returned an error scanning.');
       }
+
+      results = data.leads || [];
 
       if (interval) clearTimeout(interval);
 
@@ -263,24 +323,21 @@ export default function SearchPage({ setActiveResults }: { setActiveResults: (le
         status: 'completed',
         progress: 100,
         statusText: `Scan completed successfully. Found ${results.length} leads with no website!`,
-        resultsFound: results.length * 2, // illustrative raw items prior to filter
+        resultsFound: results.length * 2,
         resultsNoWebsite: results.length
       });
 
       addLog(`Scan complete. Scrutinized matches: ${results.length} active leads with NO website.`, 'success');
       addSearchHistory(selectedIndustry, selectedLocation);
       
-      // Save leads to active results state so Results page can display them
       setActiveResults(results);
 
-      // Brief delay before navigation
       setTimeout(() => {
         navigate('/results');
       }, 1500);
 
     } catch (err: any) {
       if (interval) clearTimeout(interval);
-      console.error(err);
       setScanState({
         status: 'failed',
         progress: 100,
@@ -293,7 +350,6 @@ export default function SearchPage({ setActiveResults }: { setActiveResults: (le
   };
 
   const handleHistoryClck = (query: string) => {
-    // query is in format "Industry in Location"
     const match = query.split(' in ');
     if (match.length === 2) {
       setUseCustomIndustry(true);
@@ -311,14 +367,14 @@ export default function SearchPage({ setActiveResults }: { setActiveResults: (le
       {/* Search Header Banner */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between border-b border-[#1E293B] pb-6 gap-4">
         <div>
-          <span className="text-xs font-mono font-semibold tracking-widest text-[#10B981] uppercase bg-emerald-500/10 px-2.5 py-1 rounded inline-block mb-2 border border-emerald-500/20">
-            SYSTEM SCAN ENGINE ACTIVE
+          <span className="text-xs font-mono font-semibold tracking-widest text-emerald-400 uppercase bg-emerald-500/10 px-2.5 py-1 rounded inline-block mb-2 border border-emerald-500/20">
+            GEMINI AI SCAN ENGINE
           </span>
           <h2 className="font-sora text-3xl font-extrabold text-white tracking-tight">
             Lead Discovery Engine
           </h2>
           <p className="text-sm text-slate-400 mt-1">
-            Discover physical businesses listed online in Nigeria that lack a website, ready for custom design pitches.
+            Discover physical businesses listed in Nigerian directories that lack a website, ready for custom design pitches.
           </p>
         </div>
       </div>
@@ -327,12 +383,11 @@ export default function SearchPage({ setActiveResults }: { setActiveResults: (le
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Input Parameters Form Card */}
         <div className="lg:col-span-7 bg-[#1E293B] border border-slate-800 rounded-xl p-6 shadow-xl relative overflow-hidden">
-          {/* Subtle decoration */}
-          <div className="absolute right-0 top-0 h-40 w-40 bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute right-0 top-0 h-40 w-40 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
 
           <h3 className="font-sora font-semibold text-lg text-white mb-4 flex items-center gap-2">
-            <Sliders size={18} className="text-blue-500" />
-            <span>Target Scraper Parameters</span>
+            <Sliders size={18} className="text-emerald-500" />
+            <span>Scanner Parameters</span>
           </h3>
 
           <form onSubmit={handleStartScan} className="space-y-5">
@@ -348,7 +403,7 @@ export default function SearchPage({ setActiveResults }: { setActiveResults: (le
                     value={industry}
                     onChange={(e) => setIndustry(e.target.value)}
                     disabled={isScanning}
-                    className="flex-1 bg-[#0F172A] border border-slate-700/80 rounded-lg px-3.5 py-2.5 text-sm text-white font-medium focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="flex-1 bg-[#0F172A] border border-slate-700/80 rounded-lg px-3.5 py-2.5 text-sm text-white font-medium focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                   >
                     {INDUSTRIES.map(ind => <option key={ind} value={ind}>{ind}</option>)}
                   </select>
@@ -370,7 +425,7 @@ export default function SearchPage({ setActiveResults }: { setActiveResults: (le
                     value={customIndustry}
                     onChange={(e) => setCustomIndustry(e.target.value)}
                     disabled={isScanning}
-                    className="flex-grow bg-[#0F172A] border border-slate-700/80 rounded-lg px-3.5 py-2.5 text-sm text-white focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="flex-grow bg-[#0F172A] border border-slate-700/80 rounded-lg px-3.5 py-2.5 text-sm text-white focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                   />
                   <button
                     type="button"
@@ -396,7 +451,7 @@ export default function SearchPage({ setActiveResults }: { setActiveResults: (le
                     value={location}
                     onChange={(e) => setLocation(e.target.value)}
                     disabled={isScanning}
-                    className="flex-1 bg-[#0F172A] border border-slate-700/80 rounded-lg px-3.5 py-2.5 text-sm text-white font-medium focus:border-blue-500 focus:outline-none"
+                    className="flex-1 bg-[#0F172A] border border-slate-700/80 rounded-lg px-3.5 py-2.5 text-sm text-white font-medium focus:border-emerald-500 focus:outline-none"
                   >
                     {NIGERIAN_STATES.map(st => <option key={st} value={st}>{st}</option>)}
                   </select>
@@ -418,7 +473,7 @@ export default function SearchPage({ setActiveResults }: { setActiveResults: (le
                     value={customLocation}
                     onChange={(e) => setCustomLocation(e.target.value)}
                     disabled={isScanning}
-                    className="flex-grow bg-[#0F172A] border border-slate-700/80 rounded-lg px-3.5 py-2.5 text-sm text-white focus:border-blue-500 focus:outline-none"
+                    className="flex-grow bg-[#0F172A] border border-slate-700/80 rounded-lg px-3.5 py-2.5 text-sm text-white focus:border-emerald-500 focus:outline-none"
                   />
                   <button
                     type="button"
@@ -432,36 +487,19 @@ export default function SearchPage({ setActiveResults }: { setActiveResults: (le
               )}
             </div>
 
-            {/* Provider Selector */}
+            {/* Source badge - always Nigerian Directories now */}
             <div>
               <label className="block text-xs font-mono font-bold text-slate-400 uppercase tracking-widest mb-2">
-                Scraping Directory Source
+                Data Source
               </label>
-              <div className="grid grid-cols-2 gap-2.5">
-                {[
-                  { id: 'Google Maps', label: 'Google Maps (Outscraper)' },
-                  { id: 'Nigerian Directories', label: 'Nigerian Directories (Gemini)' }
-                ].map((item) => (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => setSource(item.id as any)}
-                    disabled={isScanning}
-                    className={`
-                      px-4 py-3 border rounded-lg text-xs font-semibold text-center transition duration-150 flex flex-col justify-center items-center gap-1
-                      ${source === item.id 
-                        ? 'bg-blue-600/10 border-blue-500 text-blue-400' 
-                        : 'border-slate-800 bg-[#0F172A] hover:bg-slate-800 hover:border-slate-700 text-slate-400'}
-                    `}
-                  >
-                    <span>{item.label}</span>
-                    {item.id === 'Google Maps' ? (
-                      <span className="text-[9px] font-mono opacity-80">(via Outscraper API)</span>
-                    ) : (
-                      <span className="text-[9px] font-mono opacity-80">(via Gemini Search)</span>
-                    )}
-                  </button>
-                ))}
+              <div className="bg-emerald-600/10 border border-emerald-500/20 rounded-lg px-4 py-3 flex items-center gap-3">
+                <Globe size={20} className="text-emerald-400 shrink-0" />
+                <div>
+                  <p className="text-sm font-bold text-white">Nigerian Directories <span className="text-emerald-400">(Gemini AI)</span></p>
+                  <p className="text-[11px] text-slate-400 font-mono">
+                    Uses Google-grounded Gemini AI to scan VConnect, BusinessList.ng and Nigerian business directories
+                  </p>
+                </div>
               </div>
             </div>
 
@@ -475,7 +513,7 @@ export default function SearchPage({ setActiveResults }: { setActiveResults: (le
                       Gemini Email Enrichment
                     </h5>
                     <p className="text-[11px] text-slate-400 mt-1">
-                      Uses Google Search grounding to find business emails from directory listings (applies to Nigerian Directories source).
+                      Uses Google Search grounding to find business emails from directory listings.
                     </p>
                   </div>
                 </div>
@@ -487,7 +525,7 @@ export default function SearchPage({ setActiveResults }: { setActiveResults: (le
                     disabled={isScanning}
                     className="sr-only peer" 
                   />
-                  <div className="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-gray-300 after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+                  <div className="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-gray-300 after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600"></div>
                 </label>
               </div>
             </div>
@@ -507,9 +545,8 @@ export default function SearchPage({ setActiveResults }: { setActiveResults: (le
                 w-full py-3.5 rounded-lg flex items-center justify-center gap-2 font-bold text-sm tracking-wide transition-all duration-150
                 ${isScanning 
                   ? 'bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed' 
-                  : 'bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-950/40 hover:-translate-y-0.5 active:translate-y-0'}
+                  : 'bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-500 hover:to-blue-500 text-white shadow-lg shadow-emerald-950/30 active:scale-[0.98]'}
               `}
-              id="start-search-btn"
             >
               {isScanning ? (
                 <>
@@ -536,7 +573,7 @@ export default function SearchPage({ setActiveResults }: { setActiveResults: (le
           {/* Active Log entries terminal drawer */}
           <div className="bg-[#0F172A] border border-slate-800 rounded-xl overflow-hidden flex flex-col h-[230px]">
             <div className="bg-[#1E293B] px-4 py-2 flex items-center justify-between border-b border-slate-800">
-              <span className="text-[10px] uppercase font-mono font-bold tracking-widest text-[#10B981]">
+              <span className="text-[10px] uppercase font-mono font-bold tracking-widest text-emerald-400">
                 Realtime Agent Scraper Log Console
               </span>
               <div className="flex h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
@@ -569,13 +606,13 @@ export default function SearchPage({ setActiveResults }: { setActiveResults: (le
 
       {/* Quick Search Guide Help Card */}
       <div className="bg-[#1E293B]/60 border border-slate-800 rounded-xl p-5 flex items-start gap-4">
-        <div className="bg-blue-600/10 text-blue-400 p-2.5 rounded-lg border border-blue-500/20 shrink-0">
+        <div className="bg-emerald-600/10 text-emerald-400 p-2.5 rounded-lg border border-emerald-500/20 shrink-0">
           <Info size={20} />
         </div>
         <div>
-          <h4 className="font-sora text-sm font-semibold text-white">How the Scraper ensures 100% website-less accuracy:</h4>
+          <h4 className="font-sora text-sm font-semibold text-white">How the Gemini AI scanner ensures accuracy:</h4>
           <p className="text-xs text-slate-400 leading-relaxed mt-1">
-            Standard scraping fails due to directory rate limits, captchas, and obsolete static lists. LeadFlow NG routes your query directly to the Outscraper Google Maps API, then filters out any entry that currently contains a website. Results include phone, address, rating, and category data for each lead.
+            LeadFlow NG routes your query to Google-backed Gemini AI which searches Nigerian business directories (VConnect, BusinessList.ng, etc.) and filters out any entry with an existing website. Results include phone, address, rating, and category for each lead.
           </p>
         </div>
       </div>
@@ -585,7 +622,7 @@ export default function SearchPage({ setActiveResults }: { setActiveResults: (le
         <div className="bg-[#1E293B]/40 border border-slate-800/80 rounded-xl p-5">
           <h4 className="font-sora text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-2">
             <History size={14} className="text-gray-400" />
-            <span>Recent Scan Parameters Query History</span>
+            <span>Recent Scan History</span>
           </h4>
           <div className="flex flex-wrap gap-2">
             {searchHistory.map((hist, i) => (

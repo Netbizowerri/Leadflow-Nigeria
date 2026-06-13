@@ -4,6 +4,7 @@
  */
 
 import { useState, useMemo } from 'react';
+import { motion } from 'motion/react';
 import { useApp } from '../context/AppContext';
 import { Lead } from '../types';
 import LeadCard from '../components/LeadCard';
@@ -29,7 +30,7 @@ interface ResultsPageProps {
 }
 
 export default function ResultsPage({ activeResults, setActiveResults }: ResultsPageProps) {
-  const { claimLeadAndSendToCRM, bulkSendToCRM, claimedLeadIds } = useApp();
+  const { claimLeadAndSendToCRM, bulkSendToCRM, claimedLeadIds, blockedLeadPhones, blockLead } = useApp();
   const navigate = useNavigate();
 
   // Filter input states
@@ -44,10 +45,10 @@ export default function ResultsPage({ activeResults, setActiveResults }: Results
   const [bulkSending, setBulkSending] = useState(false);
   const [bulkMessage, setBulkMessage] = useState('');
 
-  // FILTER OUT CLAIMED LEADS: "ANY RESULT SELECTED AND TAKEN TO PRIVYR WILL NO LONGER BE ON THE RESULTS"
+  // FILTER OUT CLAIMED LEADS + BLOCKED LEADS
   const availableResults = useMemo(() => {
-    return activeResults.filter(l => !claimedLeadIds.includes(l.id));
-  }, [activeResults, claimedLeadIds]);
+    return activeResults.filter(l => !claimedLeadIds.includes(l.id) && !blockedLeadPhones.includes(l.phone));
+  }, [activeResults, claimedLeadIds, blockedLeadPhones]);
 
   // Apply search/sorting/filtering parameters
   const filteredResults = useMemo(() => {
@@ -121,7 +122,12 @@ export default function ResultsPage({ activeResults, setActiveResults }: Results
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto py-4">
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+      className="space-y-6 max-w-7xl mx-auto py-4"
+    >
       {/* Session Header Navigation Panel */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between border-b border-[#1E293B] pb-6 gap-4">
         <div>
@@ -349,6 +355,7 @@ export default function ResultsPage({ activeResults, setActiveResults }: Results
                       lead={lead}
                       onSendToCRM={claimLeadAndSendToCRM}
                       isClaimed={claimedLeadIds.includes(lead.id)}
+                      onReject={blockLead}
                     />
                   </div>
                 );
@@ -357,6 +364,6 @@ export default function ResultsPage({ activeResults, setActiveResults }: Results
           )}
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }
