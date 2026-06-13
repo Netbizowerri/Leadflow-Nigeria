@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useMemo } from 'react';
+import { motion } from 'motion/react';
 import { useApp } from '../context/AppContext';
 import { Lead, LeadStatus } from '../types';
 import { 
@@ -181,7 +182,12 @@ export default function LeadsPage() {
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto py-4">
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+      className="space-y-6 max-w-7xl mx-auto py-4"
+    >
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between border-b border-[#1E293B] pb-6 gap-4">
         <div>
@@ -544,6 +550,6 @@ export default function LeadsPage() {
           </div>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }

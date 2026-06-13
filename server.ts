@@ -55,6 +55,27 @@ app.post("/api/proxy-webhook", async (req, res) => {
     return res.status(400).json({ success: false, error: "Missing Webhook URL" });
   }
 
+  let parsedUrl;
+  try {
+    parsedUrl = new URL(String(url).trim());
+  } catch {
+    return res.status(400).json({ success: false, error: "Invalid Webhook URL format" });
+  }
+  if (parsedUrl.protocol !== "https:") {
+    return res.status(400).json({ success: false, error: "Webhook URL must use HTTPS" });
+  }
+  const hostname = parsedUrl.hostname.toLowerCase();
+  const blockedPatterns = [
+    "localhost", "127.0.0.1", "0.0.0.0", "::1",
+    "10.", "172.16.", "172.17.", "172.18.", "172.19.",
+    "172.20.", "172.21.", "172.22.", "172.23.", "172.24.",
+    "172.25.", "172.26.", "172.27.", "172.28.", "172.29.",
+    "172.30.", "172.31.", "192.168.",
+  ];
+  if (blockedPatterns.some(p => hostname.startsWith(p) || hostname === p)) {
+    return res.status(400).json({ success: false, error: "Webhook URL must not point to private or local network" });
+  }
+
   try {
     const formattedHeaders: Record<string, string> = {
       "Content-Type": "application/json",
@@ -100,14 +121,19 @@ app.post("/api/search", async (req, res) => {
     return res.status(400).json({ error: "Query and location are required parameters" });
   }
 
-  console.log(`Searching for "${query}" in "${location}" via "${source}"...`);
+  const sanitizedQuery = String(query).trim().replace(/[\x00-\x1F]/g, '').slice(0, 100);
+  const sanitizedLocation = String(location).trim().replace(/[\x00-\x1F]/g, '').slice(0, 100);
+
+  if (!sanitizedQuery || !sanitizedLocation) {
+    return res.status(400).json({ error: "Query and location must be non-empty after sanitization" });
+  }
+
+  const safeSource = typeof source === "string" ? source.trim() : "";
 
   // --------------------------------------------------------------------------
   // PATH: NIGERIAN DIRECTORIES (VConnect, BusinessList.com.ng)
-  // Since custom scrapers get immediately blocked or hit Cloudflare, we query Gemini with Web Search Grounding
-  // which works as a real-time scrap of directories, bringing 100% accurate results.
   // --------------------------------------------------------------------------
-  if (source === "Nigerian Directories" || source === "VConnect" || source === "BusinessList") {
+  if (safeSource === "Nigerian Directories" || safeSource === "VConnect" || safeSource === "BusinessList") {
     if (!ai) {
       return res.status(400).json({
         error: "Missing Server GEMINI_API_KEY. Please ensure your AI Studio Secrets include 'GEMINI_API_KEY'.",
@@ -117,9 +143,16 @@ app.post("/api/search", async (req, res) => {
     try {
       console.log("Scraping Nigerian Directories via Gemini Grounded Engine...");
       
-      const directorySource = source === "Nigerian Directories" ? "VConnect, BusinessList.com.ng, and YellowPages Nigeria" : source;
+      const directorySource = safeSource === "Nigerian Directories" ? "VConnect, BusinessList.com.ng, and YellowPages Nigeria" : safeSource;
       const prompt = `
-        Search real directories such as ${directorySource} for businesses inside the "${query}" sector located in "${location}", Nigeria.
+        ---BEGIN INSTRUCTION---
+        Search real directories such as ${directorySource} for businesses.
+        ---END INSTRUCTION---
+        ---BEGIN USER INPUT---
+        Sector: "${sanitizedQuery}"
+        Location: "${sanitizedLocation}", Nigeria
+        ---END USER INPUT---
+
         Your aim is to discover real, verified businesses that DO NOT have an official professional website (custom domain .com, .ng, etc.), but have listed contact details like phone number and/or email address.
         
         Retrieve 10 to 15 real listings.
@@ -177,7 +210,7 @@ app.post("/api/search", async (req, res) => {
             address: item.address || `Lagos, Nigeria`,
             rating: item.rating || null,
             userRatingsTotal: Math.floor(Math.random() * 20) + 1,
-            category: item.category || query,
+            category: item.category || sanitizedQuery,
             status: "New",
             source: item.source || source,
             notes: item.notes || "No website found. Found listed on local directory.",
