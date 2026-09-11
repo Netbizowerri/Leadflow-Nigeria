@@ -1,30 +1,31 @@
 import { useState } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { 
-  Search, 
-  Layers, 
-  Database, 
-  Webhook, 
-  LogOut, 
-  Menu, 
+import {
+  Search,
+  Layers,
+  Database,
+  Webhook,
+  LogOut,
+  Menu,
   X,
   User,
   Home,
   ShieldCheck,
-  Globe
+  Globe,
+  Shield
 } from 'lucide-react';
 
 export default function Sidebar() {
-  const { logout, privyrWebhookUrl, customWebhookUrl } = useApp();
+  const { signOut, privyrWebhookUrl, customWebhookUrl, profile, isSuperAdmin } = useApp();
   const navigate = useNavigate();
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
 
   const hasWebhook = Boolean(privyrWebhookUrl || customWebhookUrl);
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await signOut();
     navigate('/');
   };
 
@@ -35,7 +36,19 @@ export default function Sidebar() {
     { to: '/results', label: 'Scan Results', icon: Layers },
     { to: '/leads', label: 'CRM Pipeline', icon: Database },
     { to: '/webhook', label: 'Webhook Setup', icon: Webhook },
+    ...(isSuperAdmin
+      ? [{ to: '/admin', label: 'User Management', icon: Shield }]
+      : []),
   ];
+
+  const displayName = profile?.full_name || profile?.email?.split('@')[0] || 'User';
+  const roleLabel = profile?.role === 'super_admin'
+    ? 'Super Admin'
+    : profile?.role === 'admin'
+      ? 'Admin'
+      : profile?.is_verified
+        ? 'Verified User'
+        : 'Pending Verification';
 
   return (
     <>
@@ -50,7 +63,7 @@ export default function Sidebar() {
             LeadFlow <span className="text-emerald-500">NG</span>
           </span>
         </div>
-        <button 
+        <button
           onClick={() => setIsOpen(!isOpen)}
           className="text-gray-400 hover:text-white p-2"
         >
@@ -59,14 +72,14 @@ export default function Sidebar() {
       </div>
 
       {isOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/60 z-40 md:hidden"
           onClick={() => setIsOpen(false)}
         />
       )}
 
       <aside className={`
-        fixed inset-y-0 left-0 bg-[#0F172A] border-r border-[#1E293B] w-64 z-50 
+        fixed inset-y-0 left-0 bg-[#0F172A] border-r border-[#1E293B] w-64 z-50
         transform md:transform-none transition-transform duration-300 ease-in-out
         flex flex-col justify-between pt-16 md:pt-0
         ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
@@ -131,8 +144,8 @@ export default function Sidebar() {
                   onClick={() => setIsOpen(false)}
                   className={({ isActive }) => `
                     flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition duration-150
-                    ${isActive 
-                      ? 'bg-emerald-600/10 text-emerald-400 border-l-2 border-emerald-500 font-semibold' 
+                    ${isActive
+                      ? 'bg-emerald-600/10 text-emerald-400 border-l-2 border-emerald-500 font-semibold'
                       : 'text-gray-400 hover:bg-[#1E293B]/50 hover:text-white'}
                   `}
                 >
@@ -146,12 +159,16 @@ export default function Sidebar() {
 
         <div className="p-4 border-t border-[#1E293B] bg-[#0c1424]">
           <div className="flex items-center space-x-3 mb-4">
-            <div className="h-9 w-9 rounded-full bg-slate-800 text-slate-300 flex items-center justify-center font-bold">
-              <User size={16} />
+            <div className="h-9 w-9 rounded-full bg-gradient-to-br from-emerald-500/30 to-blue-600/30 text-white flex items-center justify-center font-bold">
+              {profile?.full_name ? profile.full_name.slice(0, 2).toUpperCase() : <User size={16} />}
             </div>
             <div className="truncate">
-              <p className="text-xs font-semibold text-white truncate">netbiz0925@gmail.com</p>
-              <p className="text-[10px] text-emerald-500 font-mono">Developer</p>
+              <p className="text-xs font-semibold text-white truncate">
+                {profile?.email || 'Signed in'}
+              </p>
+              <p className={`text-[10px] font-mono ${isSuperAdmin ? 'text-purple-400' : 'text-emerald-500'}`}>
+                {roleLabel}
+              </p>
             </div>
           </div>
           <button

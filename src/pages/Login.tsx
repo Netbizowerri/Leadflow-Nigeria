@@ -1,47 +1,73 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { useApp } from '../context/AppContext';
-import { Play, AlertTriangle, Radar, ArrowLeft } from 'lucide-react';
+import { Play, AlertTriangle, Radar, ArrowLeft, UserPlus, Lock } from 'lucide-react';
+
+type Mode = 'signin' | 'signup';
 
 export default function LoginPage() {
-  const { login } = useApp();
+  const { signIn, signUp } = useApp();
   const navigate = useNavigate();
-  const [email, setEmail] = useState('Netbiz0925@gmail.com');
+  const location = useLocation();
+  const from = (location.state as any)?.from?.pathname || '/search';
+
+  const [mode, setMode] = useState<Mode>('signin');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [fullName, setFullName] = useState('');
   const [loading, setLoading] = useState(false);
   const [loginError, setLoginError] = useState('');
+  const [notice, setNotice] = useState('');
 
-  const VALID_EMAIL = 'Netbiz0925@gmail.com';
-  const VALID_PASS = '***REMOVED***';
+  const switchMode = (next: Mode) => {
+    setMode(next);
+    setLoginError('');
+    setNotice('');
+  };
 
-  function constantTimeEqual(a: string, b: string): boolean {
-    if (a.length !== b.length) return false;
-    let result = 0;
-    for (let i = 0; i < a.length; i++) {
-      result |= a.charCodeAt(i) ^ b.charCodeAt(i);
-    }
-    return result === 0;
-  }
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoginError('');
+    setNotice('');
 
     const trimmedEmail = email.trim().slice(0, 320);
-    const trimmedPassword = password.trim().slice(0, 128);
 
-    if (!constantTimeEqual(trimmedEmail, VALID_EMAIL) || !constantTimeEqual(trimmedPassword, VALID_PASS)) {
-      setLoginError('Invalid email or access token.');
-      return;
+    if (mode === 'signup') {
+      if (password.length < 8) {
+        setLoginError('Password must be at least 8 characters long.');
+        return;
+      }
     }
 
     setLoading(true);
-    setTimeout(() => {
-      login();
+    try {
+      if (mode === 'signin') {
+        const result = await signIn(trimmedEmail, password);
+        if (result.error) {
+          setLoginError(result.error);
+          setLoading(false);
+          return;
+        }
+        navigate(from, { replace: true });
+      } else {
+        const result = await signUp(trimmedEmail, password, fullName.trim());
+        if (result.error) {
+          setLoginError(result.error);
+          setLoading(false);
+          return;
+        }
+        setNotice(
+          'Account created. Your account is pending verification by the administrator. You will be able to sign in once approved.'
+        );
+        setLoading(false);
+        setMode('signin');
+        setPassword('');
+      }
+    } catch (err: any) {
+      setLoginError(err.message || 'An unexpected error occurred. Please try again.');
       setLoading(false);
-      navigate('/search', { replace: true });
-    }, 850);
+    }
   };
 
   return (
@@ -58,7 +84,6 @@ export default function LoginPage() {
       >
         <div className="absolute right-0 top-0 h-1 w-full bg-gradient-to-r from-emerald-500 via-blue-500 to-purple-600 rounded-t-2xl" />
 
-        {/* Back to Home */}
         <button
           onClick={() => navigate('/')}
           className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-300 mb-6 transition-colors font-mono"
@@ -67,7 +92,7 @@ export default function LoginPage() {
           <span>Back to Home</span>
         </button>
 
-        <div className="text-center mb-8">
+        <div className="text-center mb-6">
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -82,7 +107,7 @@ export default function LoginPage() {
             transition={{ delay: 0.15 }}
             className="font-sora font-extrabold text-2xl text-white tracking-tight leading-none mb-1"
           >
-            Developer Access
+            {mode === 'signin' ? 'Secure Access' : 'Create Account'}
           </motion.h1>
           <motion.p
             initial={{ opacity: 0, y: 10 }}
@@ -90,8 +115,38 @@ export default function LoginPage() {
             transition={{ delay: 0.2 }}
             className="text-xs text-slate-400 font-mono tracking-wide mt-1.5"
           >
-            Enter your credentials to access the LeadFlow dashboard
+            {mode === 'signin'
+              ? 'Sign in with your authenticated Supabase account'
+              : 'Register to request access to the LeadFlow dashboard'}
           </motion.p>
+        </div>
+
+        {/* Mode toggle */}
+        <div className="grid grid-cols-2 gap-1 p-1 bg-[#0F172A] border border-slate-800 rounded-lg mb-6">
+          <button
+            type="button"
+            onClick={() => switchMode('signin')}
+            className={`flex items-center justify-center gap-1.5 py-2 rounded-md text-xs font-bold tracking-wide transition-colors ${
+              mode === 'signin'
+                ? 'bg-gradient-to-r from-emerald-600 to-blue-600 text-white shadow-lg shadow-emerald-900/25'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Lock size={12} />
+            Sign In
+          </button>
+          <button
+            type="button"
+            onClick={() => switchMode('signup')}
+            className={`flex items-center justify-center gap-1.5 py-2 rounded-md text-xs font-bold tracking-wide transition-colors ${
+              mode === 'signup'
+                ? 'bg-gradient-to-r from-emerald-600 to-blue-600 text-white shadow-lg shadow-emerald-900/25'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <UserPlus size={12} />
+            Sign Up
+          </button>
         </div>
 
         <motion.form
@@ -101,29 +156,46 @@ export default function LoginPage() {
           onSubmit={handleSubmit}
           className="space-y-4"
         >
+          {mode === 'signup' && (
+            <div>
+              <label className="block text-[10px] font-mono uppercase tracking-widest text-slate-400 font-bold mb-1.5">
+                Full Name
+              </label>
+              <input
+                type="text"
+                required
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                placeholder="Your full name"
+                className="w-full bg-[#0F172A] border border-slate-700 text-xs text-white rounded-lg px-3.5 py-3 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/30 font-medium transition-colors"
+              />
+            </div>
+          )}
+
           <div>
             <label className="block text-[10px] font-mono uppercase tracking-widest text-slate-400 font-bold mb-1.5">
-              Authorized Developer Email
+              Email Address
             </label>
             <input
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
               className="w-full bg-[#0F172A] border border-slate-700 text-xs text-white rounded-lg px-3.5 py-3 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/30 font-medium transition-colors"
             />
           </div>
 
           <div>
             <label className="block text-[10px] font-mono uppercase tracking-widest text-slate-400 font-bold mb-1.5">
-              Access Token
+              Password
             </label>
             <input
               type="password"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your access token"
+              placeholder={mode === 'signup' ? 'At least 8 characters' : 'Enter your password'}
               className="w-full bg-[#0F172A] border border-slate-700 text-xs text-white rounded-lg px-3.5 py-3 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/30 font-mono transition-colors"
             />
           </div>
@@ -132,10 +204,20 @@ export default function LoginPage() {
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
-              className="p-3 bg-red-950/40 border border-red-900/60 rounded-lg text-xs text-red-400 flex items-center gap-2"
+              className="p-3 bg-red-950/40 border border-red-900/60 rounded-lg text-xs text-red-400 flex items-start gap-2"
             >
-              <AlertTriangle size={15} />
+              <AlertTriangle size={15} className="mt-0.5 shrink-0" />
               <span>{loginError}</span>
+            </motion.div>
+          )}
+
+          {notice && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              className="p-3 bg-emerald-950/40 border border-emerald-900/60 rounded-lg text-xs text-emerald-400 flex items-start gap-2"
+            >
+              <span>{notice}</span>
             </motion.div>
           )}
 
@@ -147,12 +229,12 @@ export default function LoginPage() {
             {loading ? (
               <>
                 <div className="h-3.5 w-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                <span>Initializing Terminal Space...</span>
+                <span>Authenticating...</span>
               </>
             ) : (
               <>
                 <Play size={13} fill="currentColor" />
-                <span>Initialize Terminal Session</span>
+                <span>{mode === 'signin' ? 'Initialize Terminal Session' : 'Create Account'}</span>
               </>
             )}
           </button>
@@ -164,7 +246,7 @@ export default function LoginPage() {
           transition={{ delay: 0.4 }}
           className="text-center text-[10px] text-slate-500 font-mono mt-6 leading-relaxed"
         >
-          Secured with double client-side sandbox containers. No credential objects are ever transmitted outside your browser.
+          Authentication and sessions are managed securely by Supabase Auth. New accounts require administrator verification.
         </motion.div>
       </motion.div>
     </div>

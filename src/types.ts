@@ -33,14 +33,14 @@ export interface WebhookLog {
   responsePreview: string;
 }
 
-export type ScanStatus = 
-  | 'idle' 
-  | 'searching' 
-  | 'paginating' 
-  | 'details' 
-  | 'filtering' 
-  | 'enriching' 
-  | 'completed' 
+export type ScanStatus =
+  | 'idle'
+  | 'searching'
+  | 'paginating'
+  | 'details'
+  | 'filtering'
+  | 'enriching'
+  | 'completed'
   | 'failed';
 
 export interface ScanProgress {
@@ -49,4 +49,38 @@ export interface ScanProgress {
   statusText: string;
   resultsFound: number;
   resultsNoWebsite: number;
+}
+
+// -------------------------------------------------------------
+// Supabase domain types
+// -------------------------------------------------------------
+
+export type UserRole = 'super_admin' | 'admin' | 'user';
+
+export interface UserProfile {
+  id: string;
+  email: string;
+  full_name: string;
+  role: UserRole;
+  is_verified: boolean;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UserSettings {
+  user_id: string;
+  hunter_api_key: string;
+  privyr_webhook_url: string;
+  custom_webhook_url: string;
+  webhook_auth_header: string;
+  webhook_auth_value: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AdminUser extends UserProfile {
+  last_sign_in_at: string | null;
+  created_at: string;
+  id: string;
 }

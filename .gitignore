@@ -8,3 +8,9 @@ coverage/
 !.env.example
 
 .vercel
+
+# Scraped site samples / data artifacts
+.firecrawl/
+
+# Supabase CLI local state
+supabase/.temp/

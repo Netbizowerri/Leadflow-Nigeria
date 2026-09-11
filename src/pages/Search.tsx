@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
+import { getSessionToken } from '../lib/supabase';
 import { ScanStatus, ScanProgress } from '../types';
 import RadarAnimation from '../components/RadarAnimation';
 import { 
@@ -294,10 +295,13 @@ export default function SearchPage({ setActiveResults }: { setActiveResults: (le
     try {
       let results: any[] = [];
 
+      const token = await getSessionToken();
+
       const response = await fetch('/api/search', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({
           query: selectedIndustry,
@@ -323,7 +327,7 @@ export default function SearchPage({ setActiveResults }: { setActiveResults: (le
         status: 'completed',
         progress: 100,
         statusText: `Scan completed successfully. Found ${results.length} leads with no website!`,
-        resultsFound: results.length * 2,
+        resultsFound: results.length,
         resultsNoWebsite: results.length
       });
 

@@ -8,6 +8,8 @@ import path from "path";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
+import { lookup } from "node:dns/promises";
+import { getUserFromRequest } from "./auth";
 
 dotenv.config();
 
@@ -47,9 +49,41 @@ function normalizeNigerianPhone(phone: string): string {
 }
 
 // -------------------------------------------------------------
+// Helper: Reject private/loopback/link-local IPs (SSRF guard)
+// -------------------------------------------------------------
+function isPrivateIp(ip: string): boolean {
+  let addr = ip.toLowerCase();
+  const v4mapped = /^::ffff:(\d+\.\d+\.\d+\.\d+)$/.exec(addr);
+  if (v4mapped) addr = v4mapped[1];
+
+  if (addr.includes(":")) {
+    if (addr === "::" || addr === "::1") return true;
+    if (addr.startsWith("fe80:") || addr.startsWith("fc") || addr.startsWith("fd")) return true;
+    return false;
+  }
+
+  const octets = addr.split(".").map(Number);
+  if (octets.length !== 4) return true;
+  const [a, b] = octets;
+  if (a === 0) return true;                                        // 0.0.0.0/8
+  if (a === 10) return true;                                       // 10.0.0.0/8
+  if (a === 100 && b >= 64 && b <= 127) return true;               // 100.64.0.0/10
+  if (a === 127) return true;                                      // 127.0.0.0/8
+  if (a === 169 && b === 254) return true;                         // 169.254.0.0/16
+  if (a === 172 && b >= 16 && b <= 31) return true;                // 172.16.0.0/12
+  if (a === 192 && b === 168) return true;                         // 192.168.0.0/16
+  return false;
+}
+
+// -------------------------------------------------------------
 // API: Webhook Proxy to bypass potential browser CORS blockages
 // -------------------------------------------------------------
 app.post("/api/proxy-webhook", async (req, res) => {
+  const auth = await getUserFromRequest(req.headers.authorization);
+  if (!auth.ok) {
+    return res.status(401).json({ success: false, error: auth.error || "Unauthorized" });
+  }
+
   const { url, payload, headers } = req.body;
   if (!url) {
     return res.status(400).json({ success: false, error: "Missing Webhook URL" });
@@ -65,15 +99,16 @@ app.post("/api/proxy-webhook", async (req, res) => {
     return res.status(400).json({ success: false, error: "Webhook URL must use HTTPS" });
   }
   const hostname = parsedUrl.hostname.toLowerCase();
-  const blockedPatterns = [
-    "localhost", "127.0.0.1", "0.0.0.0", "::1",
-    "10.", "172.16.", "172.17.", "172.18.", "172.19.",
-    "172.20.", "172.21.", "172.22.", "172.23.", "172.24.",
-    "172.25.", "172.26.", "172.27.", "172.28.", "172.29.",
-    "172.30.", "172.31.", "192.168.",
-  ];
-  if (blockedPatterns.some(p => hostname.startsWith(p) || hostname === p)) {
-    return res.status(400).json({ success: false, error: "Webhook URL must not point to private or local network" });
+
+  // Resolve hostname to IPs and block any private/loopback/link-local target
+  try {
+    const addresses = await lookup(hostname, { all: true, verbatim: true });
+    if (addresses.length === 0) throw new Error("No addresses");
+    if (addresses.some(({ address }) => isPrivateIp(address))) {
+      return res.status(400).json({ success: false, error: "Webhook URL must not point to private or local network" });
+    }
+  } catch {
+    return res.status(400).json({ success: false, error: "Webhook URL hostname could not be resolved" });
   }
 
   try {
@@ -82,11 +117,25 @@ app.post("/api/proxy-webhook", async (req, res) => {
       ...headers,
     };
 
-    const response = await fetch(url, {
-      method: "POST",
-      headers: formattedHeaders,
-      body: JSON.stringify(payload),
-    });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
+
+    let response: Response;
+    try {
+      response = await fetch(url, {
+        method: "POST",
+        headers: formattedHeaders,
+        body: JSON.stringify(payload),
+        redirect: "manual",
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timeout);
+    }
+
+    if (response.status >= 300 && response.status < 400) {
+      return res.status(400).json({ success: false, error: "Webhook URL must not redirect — redirects are blocked" });
+    }
 
     const responseText = await response.text();
     let parsedData = null;
@@ -115,6 +164,11 @@ app.post("/api/proxy-webhook", async (req, res) => {
 // API: Lead Searcher Engine (Nigerian Directories via Gemini)
 // -------------------------------------------------------------
 app.post("/api/search", async (req, res) => {
+  const auth = await getUserFromRequest(req.headers.authorization);
+  if (!auth.ok) {
+    return res.status(401).json({ error: auth.error || "Unauthorized" });
+  }
+
   const { query, location, source } = req.body;
 
   if (!query || !location) {
@@ -129,6 +183,7 @@ app.post("/api/search", async (req, res) => {
   }
 
   const safeSource = typeof source === "string" ? source.trim() : "";
+  const enrichmentEnabled = req.body.useGeminiEnrichment === undefined ? true : Boolean(req.body.useGeminiEnrichment);
 
   // --------------------------------------------------------------------------
   // PATH: NIGERIAN DIRECTORIES (VConnect, BusinessList.com.ng)
@@ -160,7 +215,7 @@ app.post("/api/search", async (req, res) => {
         For each business, provide:
         1. "name": The exact registered business name.
         2. "phone": A valid active Nigerian phone number (normalized to +234 format, e.g. +234803xxxxxxx).
-        3. "email": Discover their email address. If they have none, provide a logical null.
+        3. "email": ${enrichmentEnabled ? "Discover their email address. If they have none, provide a logical null." : "Do not attempt email discovery. Always return null."}
         4. "address": Physical address/landmark.
         5. "rating": Average rating from directories or Map reviews (estimate between 3.5 and 5.0 or null).
         6. "category": Simple title category (e.g. Real Estate Agent, School).
@@ -237,12 +292,25 @@ app.post("/api/search", async (req, res) => {
 // -------------------------------------------------------------
 const startWebServer = async () => {
   if (process.env.NODE_ENV !== "production") {
-    // Development Mode with Vite Middleware
+    // Development Mode with Vite Middleware.
+    // Attach Vite's HMR WebSocket to the same Express HTTP server so it connects
+    // on port 3000 (same-origin), otherwise Vite binds a random free port which
+    // the index.html CSP `connect-src 'self'` blocks — breaking HMR full-reloads.
+    const httpServer = app.listen(PORT, "0.0.0.0");
+
     const vite = await createViteServer({
-      server: { middlewareMode: true },
+      server: {
+        middlewareMode: true,
+        hmr: { server: httpServer },
+      },
       appType: "spa",
     });
+
     app.use(vite.middlewares);
+
+    httpServer.on("listening", () => {
+      console.log(`LeadFlow Nigeria running on http://0.0.0.0:${PORT}`);
+    });
   } else {
     // Production Mode with pre-built static files
     const distPath = path.join(process.cwd(), "dist");
@@ -250,11 +318,11 @@ const startWebServer = async () => {
     app.get("*", (req, res) => {
       res.sendFile(path.join(distPath, "index.html"));
     });
-  }
 
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`LeadFlow Nigeria running on http://0.0.0.0:${PORT}`);
-  });
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log(`LeadFlow Nigeria running on http://0.0.0.0:${PORT}`);
+    });
+  }
 };
 
 startWebServer();

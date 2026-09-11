@@ -1,4 +1,5 @@
 import { GoogleGenAI } from '@google/genai';
+import { getUserFromRequest } from '../auth';
 
 const geminiApiKey = process.env.GEMINI_API_KEY;
 let ai: GoogleGenAI | null = null;
@@ -28,6 +29,11 @@ export default async function handler(req: any, res: any) {
 
   const { query, location, source } = req.body;
 
+  const auth = await getUserFromRequest(req.headers.authorization);
+  if (!auth.ok) {
+    return res.status(401).json({ error: auth.error || 'Unauthorized' });
+  }
+
   if (!query || !location) {
     return res.status(400).json({ error: 'Query and location are required parameters' });
   }
@@ -38,6 +44,8 @@ export default async function handler(req: any, res: any) {
   if (!sanitizedQuery || !sanitizedLocation) {
     return res.status(400).json({ error: 'Query and location must be non-empty after sanitization' });
   }
+
+  const enrichmentEnabled = req.body.useGeminiEnrichment === undefined ? true : Boolean(req.body.useGeminiEnrichment);
 
   if (source === 'Nigerian Directories' || source === 'VConnect' || source === 'BusinessList') {
     if (!ai) {
@@ -58,14 +66,13 @@ export default async function handler(req: any, res: any) {
         ---END USER INPUT---
 
         Your aim is to discover real, verified businesses that DO NOT have an official professional website (custom domain .com, .ng, etc.), but have listed contact details like phone number and/or email address.
-        Your aim is to discover real, verified businesses that DO NOT have an official professional website (custom domain .com, .ng, etc.), but have listed contact details like phone number and/or email address.
 
         Retrieve 10 to 15 real listings.
 
         For each business, provide:
         1. "name": The exact registered business name.
         2. "phone": A valid active Nigerian phone number (normalized to +234 format, e.g. +234803xxxxxxx).
-        3. "email": Discover their email address. If they have none, provide a logical null.
+        3. "email": ${enrichmentEnabled ? 'Discover their email address. If they have none, provide a logical null.' : 'Do not attempt email discovery. Always return null.'}
         4. "address": Physical address/landmark.
         5. "rating": Average rating from directories or Map reviews (estimate between 3.5 and 5.0 or null).
         6. "category": Simple title category (e.g. Real Estate Agent, School).

@@ -59,7 +59,7 @@ export default function ResultsPage({ activeResults, setActiveResults }: Results
         
       const matchesRating = lead.rating ? lead.rating >= minRating : minRating === 0;
       const matchesEmail = onlyWithEmail ? Boolean(lead.email) : true;
-      const matchesNoWebsite = noWebsiteOnly ? lead.hasWebsite === false : true;
+      const matchesNoWebsite = noWebsiteOnly ? lead.hasWebsite !== true : true;
 
       return matchesSearch && matchesRating && matchesEmail && matchesNoWebsite;
     });
