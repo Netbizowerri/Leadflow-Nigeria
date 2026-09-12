@@ -45,6 +45,14 @@ export default function HomePage() {
         <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1)_1px,transparent_1px)] bg-[size:24px_24px]" />
 
         <div className="relative z-10 max-w-4xl mx-auto text-center">
+          <motion.img
+            src="https://i.ibb.co/VYPtXmPB/Lead-Flow.png"
+            alt="LeadFlow Nigeria"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+            className="h-24 sm:h-20 md:h-24 w-auto mx-auto mb-8"
+          />
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -52,7 +60,7 @@ export default function HomePage() {
           >
             <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono font-bold tracking-wider uppercase mb-6">
               <Radar size={14} />
-              Lead Discovery Engine v2.0
+              LeadFlow Nigeria
             </span>
           </motion.div>
 

@@ -55,10 +55,11 @@ export default function Sidebar() {
       {/* Mobile top bar */}
       <div className="md:hidden flex items-center justify-between px-4 py-3 bg-[#0F172A] border-b border-[#1E293B] fixed top-0 w-full z-50">
         <div className="flex items-center space-x-2">
-          <div className="relative flex h-3 w-3 items-center justify-center">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-          </div>
+          <img
+            src="https://i.ibb.co/VYPtXmPB/Lead-Flow.png"
+            alt="LeadFlow"
+            className="h-9 w-auto"
+          />
           <span className="font-sora font-bold text-lg text-white tracking-tight">
             LeadFlow <span className="text-emerald-500">NG</span>
           </span>
@@ -86,16 +87,15 @@ export default function Sidebar() {
       `}>
         <div>
           <div className="hidden md:flex items-center space-x-3 px-6 py-6 border-b border-[#1E293B]">
-            <div className="flex items-center justify-center h-10 w-10 rounded-lg bg-gradient-to-br from-emerald-500/20 to-blue-600/20 text-emerald-400 border border-emerald-500/20">
-              <Globe size={22} />
-            </div>
+            <img
+              src="https://i.ibb.co/VYPtXmPB/Lead-Flow.png"
+              alt="LeadFlow Nigeria"
+              className="h-9 w-auto shrink-0"
+            />
             <div>
               <h1 className="font-sora font-semibold text-base text-white tracking-tight leading-none">
                 LeadFlow Nigeria
               </h1>
-              <span className="text-[10px] text-gray-500 font-mono tracking-wider">
-                LEADS AGENT Pro
-              </span>
             </div>
           </div>
 

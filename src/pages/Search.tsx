@@ -369,11 +369,7 @@ export default function SearchPage({ setActiveResults }: { setActiveResults: (le
   return (
     <div className="space-y-6 max-w-5xl mx-auto py-4">
       {/* Search Header Banner */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between border-b border-[#1E293B] pb-6 gap-4">
-        <div>
-          <span className="text-xs font-mono font-semibold tracking-widest text-emerald-400 uppercase bg-emerald-500/10 px-2.5 py-1 rounded inline-block mb-2 border border-emerald-500/20">
-            GEMINI AI SCAN ENGINE
-          </span>
+      <div className="border-b border-[#1E293B] pb-6">
           <h2 className="font-sora text-3xl font-extrabold text-white tracking-tight">
             Lead Discovery Engine
           </h2>
@@ -381,7 +377,6 @@ export default function SearchPage({ setActiveResults }: { setActiveResults: (le
             Discover physical businesses listed in Nigerian directories that lack a website, ready for custom design pitches.
           </p>
         </div>
-      </div>
 
       {/* Main Grid View */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
