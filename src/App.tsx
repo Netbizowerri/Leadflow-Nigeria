@@ -11,6 +11,7 @@ import WebhookPage from './pages/Webhook';
 import HomePage from './pages/Home';
 import LoginPage from './pages/Login';
 import AdminPage from './pages/Admin';
+import { PrivacyPage, TermsPage, CookiePage } from './pages/Legal';
 import { ShieldAlert, Mail, Clock } from 'lucide-react';
 
 /* ------------------------------------------------------------------ */
@@ -125,6 +126,11 @@ function AppRoutes() {
           {/* Public routes */}
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
+
+          {/* Legal pages */}
+          <Route path="/legal/privacy" element={<PrivacyPage />} />
+          <Route path="/legal/terms" element={<TermsPage />} />
+          <Route path="/legal/cookies" element={<CookiePage />} />
 
           {/* Protected routes (require auth + verified) */}
           <Route path="/search" element={

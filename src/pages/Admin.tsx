@@ -158,6 +158,63 @@ export default function AdminPage() {
     return src.slice(0, 2).toUpperCase();
   };
 
+  const renderActions = (u: AdminUser) => {
+    const isSelf = u.id === profile?.id;
+    return (
+      <div className="flex flex-wrap items-center gap-1.5">
+        {busy === u.id && (
+          <div className="h-3.5 w-3.5 border-2 border-slate-600 border-t-emerald-400 rounded-full animate-spin" />
+        )}
+        {u.is_verified ? (
+          <button
+            title="Unverify user"
+            disabled={isSelf || busy === u.id}
+            onClick={() => handleVerify(u, false)}
+            className="p-2 rounded-md border border-slate-700 text-amber-400 hover:border-amber-500/60 hover:bg-amber-500/10 transition-colors disabled:opacity-40"
+          >
+            <UserX size={13} />
+          </button>
+        ) : (
+          <button
+            title="Verify user"
+            disabled={busy === u.id}
+            onClick={() => handleVerify(u, true)}
+            className="p-2 rounded-md border border-slate-700 text-emerald-400 hover:border-emerald-500/60 hover:bg-emerald-500/10 transition-colors disabled:opacity-40"
+          >
+            <UserCheck size={13} />
+          </button>
+        )}
+        {u.is_active ? (
+          <button
+            title="Suspend user"
+            disabled={isSelf || busy === u.id}
+            onClick={() => handleToggleActive(u, false)}
+            className="p-2 rounded-md border border-slate-700 text-red-400 hover:border-red-500/60 hover:bg-red-500/10 transition-colors disabled:opacity-40"
+          >
+            <UserX size={13} />
+          </button>
+        ) : (
+          <button
+            title="Reactivate user"
+            disabled={busy === u.id}
+            onClick={() => handleToggleActive(u, true)}
+            className="p-2 rounded-md border border-slate-700 text-emerald-400 hover:border-emerald-500/60 hover:bg-emerald-500/10 transition-colors disabled:opacity-40"
+          >
+            <CheckCircle2 size={13} />
+          </button>
+        )}
+        <button
+          title="Delete user"
+          disabled={isSelf || busy === u.id}
+          onClick={() => setConfirmDelete({ id: u.id, name: u.email })}
+          className="p-2 rounded-md border border-slate-700 text-red-400 hover:border-red-500/60 hover:bg-red-500/10 transition-colors disabled:opacity-40"
+        >
+          <Trash2 size={13} />
+        </button>
+      </div>
+    );
+  };
+
   return (
     <div className="font-sans">
       {/* Header */}
@@ -227,152 +284,199 @@ export default function AdminPage() {
           <p className="text-xs font-mono text-slate-400">Loading user directory...</p>
         </div>
       ) : (
-        <div className="glass-panel rounded-2xl overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="border-b border-slate-800 text-[10px] font-mono uppercase tracking-widest text-slate-500">
-                  <th className="px-5 py-3 font-semibold">User</th>
-                  <th className="px-4 py-3 font-semibold">Role</th>
-                  <th className="px-4 py-3 font-semibold">Verification</th>
-                  <th className="px-4 py-3 font-semibold">Status</th>
-                  <th className="px-4 py-3 font-semibold">Joined</th>
-                  <th className="px-4 py-3 font-semibold">Last Sign-in</th>
-                  <th className="px-4 py-3 font-semibold text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800/60">
-                {users.map((u) => {
-                  const isSelf = u.id === profile?.id;
-                  return (
-                    <tr key={u.id} className="hover:bg-white/[0.02] transition-colors">
-                      <td className="px-5 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-emerald-500/20 to-blue-600/20 border border-emerald-500/20 flex items-center justify-center text-xs font-bold text-emerald-300">
-                            {initials(u.full_name, u.email)}
-                          </div>
-                          <div className="min-w-0">
-                            <div className="text-slate-200 font-semibold text-sm truncate flex items-center gap-2">
-                              {u.full_name || 'Unnamed'}
-                              {isSelf && (
-                                <span className="px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300 text-[9px] font-bold uppercase tracking-wide">
-                                  You
-                                </span>
-                              )}
+        <>
+          {/* Desktop table */}
+          <div className="glass-panel rounded-2xl overflow-hidden hidden md:block">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead>
+                  <tr className="border-b border-slate-800 text-[10px] font-mono uppercase tracking-widest text-slate-500">
+                    <th className="px-5 py-3 font-semibold">User</th>
+                    <th className="px-4 py-3 font-semibold">Role</th>
+                    <th className="px-4 py-3 font-semibold">Verification</th>
+                    <th className="px-4 py-3 font-semibold">Status</th>
+                    <th className="px-4 py-3 font-semibold">Joined</th>
+                    <th className="px-4 py-3 font-semibold">Last Sign-in</th>
+                    <th className="px-4 py-3 font-semibold text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/60">
+                  {users.map((u) => {
+                    const isSelf = u.id === profile?.id;
+                    return (
+                      <tr key={u.id} className="hover:bg-white/[0.02] transition-colors">
+                        <td className="px-5 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-emerald-500/20 to-blue-600/20 border border-emerald-500/20 flex items-center justify-center text-xs font-bold text-emerald-300">
+                              {initials(u.full_name, u.email)}
                             </div>
-                            <div className="text-slate-500 text-xs font-mono truncate flex items-center gap-1">
-                              <Mail size={10} /> {u.email}
+                            <div className="min-w-0">
+                              <div className="text-slate-200 font-semibold text-sm truncate flex items-center gap-2">
+                                {u.full_name || 'Unnamed'}
+                                {isSelf && (
+                                  <span className="px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300 text-[9px] font-bold uppercase tracking-wide">
+                                    You
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-slate-500 text-xs font-mono truncate flex items-center gap-1">
+                                <Mail size={10} /> {u.email}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-4">
-                        <div className="flex items-center gap-2">
-                          {roleBadge(u.role)}
-                          <select
-                            value={u.role}
-                            disabled={busy === u.id || isSelf}
-                            onChange={(e) => handleRoleChange(u, e.target.value)}
-                            className="bg-[#0F172A] border border-slate-700 rounded-md text-[10px] py-1 px-1.5 text-slate-300 focus:border-emerald-500 focus:outline-none disabled:opacity-40"
-                          >
-                            <option value="user">user</option>
-                            <option value="admin">admin</option>
-                            <option value="super_admin">super_admin</option>
-                          </select>
-                        </div>
-                      </td>
-                      <td className="px-4 py-4">
-                        {u.is_verified ? (
-                          <span className="inline-flex items-center gap-1.5 text-emerald-400 text-xs font-mono">
-                            <CheckCircle2 size={13} /> Verified
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1.5 text-amber-400 text-xs font-mono">
-                            <Clock size={13} /> Pending
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-4 py-4">
-                        {u.is_active ? (
-                          <span className="inline-flex items-center gap-1.5 text-emerald-400 text-xs font-mono">
-                            <Sparkles size={13} /> Active
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1.5 text-red-400 text-xs font-mono">
-                            <XCircle size={13} /> Suspended
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-4 py-4 text-slate-400 text-xs">{fmtDate(u.created_at)}</td>
-                      <td className="px-4 py-4 text-slate-400 text-xs">{fmtDate(u.last_sign_in_at)}</td>
-                      <td className="px-4 py-4">
-                        <div className="flex items-center justify-end gap-1.5">
-                          {busy === u.id && (
-                            <div className="h-3.5 w-3.5 border-2 border-slate-600 border-t-emerald-400 rounded-full animate-spin" />
-                          )}
+                        </td>
+                        <td className="px-4 py-4">
+                          <div className="flex items-center gap-2">
+                            {roleBadge(u.role)}
+                            <select
+                              value={u.role}
+                              disabled={busy === u.id || isSelf}
+                              onChange={(e) => handleRoleChange(u, e.target.value)}
+                              className="bg-[#0F172A] border border-slate-700 rounded-md text-[10px] py-1 px-1.5 text-slate-300 focus:border-emerald-500 focus:outline-none disabled:opacity-40"
+                            >
+                              <option value="user">user</option>
+                              <option value="admin">admin</option>
+                              <option value="super_admin">super_admin</option>
+                            </select>
+                          </div>
+                        </td>
+                        <td className="px-4 py-4">
                           {u.is_verified ? (
-                            <button
-                              title="Unverify user"
-                              disabled={isSelf || busy === u.id}
-                              onClick={() => handleVerify(u, false)}
-                              className="p-2 rounded-md border border-slate-700 text-amber-400 hover:border-amber-500/60 hover:bg-amber-500/10 transition-colors disabled:opacity-40"
-                            >
-                              <UserX size={13} />
-                            </button>
+                            <span className="inline-flex items-center gap-1.5 text-emerald-400 text-xs font-mono">
+                              <CheckCircle2 size={13} /> Verified
+                            </span>
                           ) : (
-                            <button
-                              title="Verify user"
-                              disabled={busy === u.id}
-                              onClick={() => handleVerify(u, true)}
-                              className="p-2 rounded-md border border-slate-700 text-emerald-400 hover:border-emerald-500/60 hover:bg-emerald-500/10 transition-colors disabled:opacity-40"
-                            >
-                              <UserCheck size={13} />
-                            </button>
+                            <span className="inline-flex items-center gap-1.5 text-amber-400 text-xs font-mono">
+                              <Clock size={13} /> Pending
+                            </span>
                           )}
+                        </td>
+                        <td className="px-4 py-4">
                           {u.is_active ? (
-                            <button
-                              title="Suspend user"
-                              disabled={isSelf || busy === u.id}
-                              onClick={() => handleToggleActive(u, false)}
-                              className="p-2 rounded-md border border-slate-700 text-red-400 hover:border-red-500/60 hover:bg-red-500/10 transition-colors disabled:opacity-40"
-                            >
-                              <UserX size={13} />
-                            </button>
+                            <span className="inline-flex items-center gap-1.5 text-emerald-400 text-xs font-mono">
+                              <Sparkles size={13} /> Active
+                            </span>
                           ) : (
-                            <button
-                              title="Reactivate user"
-                              disabled={busy === u.id}
-                              onClick={() => handleToggleActive(u, true)}
-                              className="p-2 rounded-md border border-slate-700 text-emerald-400 hover:border-emerald-500/60 hover:bg-emerald-500/10 transition-colors disabled:opacity-40"
-                            >
-                              <CheckCircle2 size={13} />
-                            </button>
+                            <span className="inline-flex items-center gap-1.5 text-red-400 text-xs font-mono">
+                              <XCircle size={13} /> Suspended
+                            </span>
                           )}
-                          <button
-                            title="Delete user"
-                            disabled={isSelf || busy === u.id}
-                            onClick={() => setConfirmDelete({ id: u.id, name: u.email })}
-                            className="p-2 rounded-md border border-slate-700 text-red-400 hover:border-red-500/60 hover:bg-red-500/10 transition-colors disabled:opacity-40"
-                          >
-                            <Trash2 size={13} />
-                          </button>
-                        </div>
+                        </td>
+                        <td className="px-4 py-4 text-slate-400 text-xs">{fmtDate(u.created_at)}</td>
+                        <td className="px-4 py-4 text-slate-400 text-xs">{fmtDate(u.last_sign_in_at)}</td>
+                        <td className="px-4 py-4">
+                          <div className="flex items-center justify-end">{renderActions(u)}</div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {users.length === 0 && (
+                    <tr>
+                      <td colSpan={7} className="px-5 py-12 text-center text-slate-400 text-sm">
+                        <KeyRound className="mx-auto mb-2 text-slate-500" size={24} />
+                        No users found yet.
                       </td>
                     </tr>
-                  );
-                })}
-                {users.length === 0 && (
-                  <tr>
-                    <td colSpan={7} className="px-5 py-12 text-center text-slate-400 text-sm">
-                      <KeyRound className="mx-auto mb-2 text-slate-500" size={24} />
-                      No users found yet.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
+
+          {/* Mobile cards */}
+          <div className="md:hidden space-y-3">
+            {users.map((u) => {
+              const isSelf = u.id === profile?.id;
+              return (
+                <div key={u.id} className="glass-panel rounded-2xl p-4">
+                  <div className="flex items-start justify-between gap-2 mb-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-emerald-500/20 to-blue-600/20 border border-emerald-500/20 flex items-center justify-center text-xs font-bold text-emerald-300 shrink-0">
+                        {initials(u.full_name, u.email)}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-slate-200 font-semibold text-sm truncate">
+                          {u.full_name || 'Unnamed'}
+                        </div>
+                        <div className="text-slate-500 text-xs font-mono truncate">{u.email}</div>
+                      </div>
+                    </div>
+                    {isSelf && (
+                      <span className="px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300 text-[9px] font-bold uppercase tracking-wide shrink-0">
+                        You
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 mb-3">
+                    {roleBadge(u.role)}
+                    {u.is_verified ? (
+                      <span className="inline-flex items-center gap-1 text-emerald-400 text-[10px] font-mono">
+                        <CheckCircle2 size={11} /> Verified
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-amber-400 text-[10px] font-mono">
+                        <Clock size={11} /> Pending
+                      </span>
+                    )}
+                    {u.is_active ? (
+                      <span className="inline-flex items-center gap-1 text-emerald-400 text-[10px] font-mono">
+                        <Sparkles size={11} /> Active
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-red-400 text-[10px] font-mono">
+                        <XCircle size={11} /> Suspended
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="space-y-2 mb-3 text-[11px]">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-slate-500 font-mono uppercase tracking-wider text-[9px] shrink-0">
+                        Role
+                      </span>
+                      <select
+                        value={u.role}
+                        disabled={busy === u.id || isSelf}
+                        onChange={(e) => handleRoleChange(u, e.target.value)}
+                        className="bg-[#0F172A] border border-slate-700 rounded-md text-[11px] py-1 px-1.5 text-slate-300 focus:border-emerald-500 focus:outline-none disabled:opacity-40"
+                      >
+                        <option value="user">user</option>
+                        <option value="admin">admin</option>
+                        <option value="super_admin">super_admin</option>
+                      </select>
+                    </div>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-slate-500 font-mono uppercase tracking-wider text-[9px] shrink-0">
+                        Joined
+                      </span>
+                      <span className="text-slate-300">{fmtDate(u.created_at)}</span>
+                    </div>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-slate-500 font-mono uppercase tracking-wider text-[9px] shrink-0">
+                        Last Sign-in
+                      </span>
+                      <span className="text-slate-300">{fmtDate(u.last_sign_in_at)}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-2 pt-3 border-t border-slate-800/60">
+                    <span className="text-[9px] font-mono uppercase tracking-wider text-slate-600">
+                      Manage
+                    </span>
+                    {renderActions(u)}
+                  </div>
+                </div>
+              );
+            })}
+            {users.length === 0 && (
+              <div className="glass-panel rounded-2xl py-12 text-center text-slate-400 text-sm">
+                <KeyRound className="mx-auto mb-2 text-slate-500" size={24} />
+                No users found yet.
+              </div>
+            )}
+          </div>
+        </>
       )}
 
       {/* Delete confirmation modal */}

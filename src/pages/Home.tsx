@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Search, Radar, Zap, ArrowRight, Users, TrendingUp } from 'lucide-react';
 
 const stats = [
@@ -205,15 +205,21 @@ export default function HomePage() {
 
       {/* Footer */}
       <footer className="border-t border-slate-800/60 py-8 px-4">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-slate-600 font-mono">
-            LeadFlow Nigeria &copy; {new Date().getFullYear()} &mdash; Autonomous Lead Scraper &amp; Pitcher Code Tool
-          </p>
-          <div className="flex items-center gap-4 text-xs text-slate-600 font-mono">
-            <span>Powered by Gemini AI</span>
-            <span className="w-1 h-1 rounded-full bg-slate-700" />
-            <span>Made in Nigeria</span>
-          </div>
+        <div className="max-w-6xl mx-auto flex flex-col items-center justify-between gap-5">
+          <nav className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs text-white">
+            <Link to="/legal/privacy" className="hover:text-emerald-300 transition-colors">
+              Privacy Policy
+            </Link>
+            <Link to="/legal/terms" className="hover:text-emerald-300 transition-colors">
+              Terms of Service
+            </Link>
+            <Link to="/legal/cookies" className="hover:text-emerald-300 transition-colors">
+              Cookie Policy
+            </Link>
+            <Link to="/login" className="hover:text-emerald-300 transition-colors">
+              Sign In
+            </Link>
+          </nav>
         </div>
       </footer>
     </div>
